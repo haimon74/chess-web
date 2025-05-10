@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { GameState, GameSettings as GameSettingsType, Position } from '../types/chess';
 import ChessBoard from './ChessBoard';
 import GameSettings from './GameSettings';
-import { initializeBoard, makeMove, calculateValidMoves, calculateComputerMove } from '../utils/chessLogic';
+import { initializeBoard, makeMove, calculateValidMoves } from '../utils/chessLogic';
+import { calculateComputerMove } from '../utils/chessAI';
 import './ChessGame.css';
 
 const ChessGame: React.FC = () => {
@@ -79,8 +80,14 @@ const ChessGame: React.FC = () => {
     <div className="chess-game">
       <div className="game-info">
         <h2>Chess Game</h2>
-        <p>Current Turn: {gameState.currentTurn}</p>
-        {gameState.isCheck && <p className="check-warning">Check!</p>}
+        <div className="turn-info">
+          <button onClick={() => startNewGame(settings)}>New Game</button>
+          <p>Current Turn: {gameState.currentTurn}</p>
+          <div className={`computer-thinking ${isComputerThinking ? 'visible' : ''}`}>
+            <div className="spinner"></div>
+            <span>Computer is thinking...</span>
+          </div>
+        </div>
         {gameState.isCheckmate && <p className="checkmate">Checkmate!</p>}
         {gameState.isStalemate && <p className="stalemate">Stalemate!</p>}
       </div>
@@ -92,13 +99,10 @@ const ChessGame: React.FC = () => {
           onPieceClick={handlePieceClick}
           onSquareClick={handleSquareClick}
           theme={gameState.boardTheme}
+          isCheck={gameState.isCheck}
+          gameState={gameState}
         />
-        <div className={`computer-thinking ${isComputerThinking ? 'visible' : ''}`}>
-          <div className="spinner"></div>
-          <span>Computer is thinking...</span>
-        </div>
       </div>
-      <button onClick={() => startNewGame(settings)}>New Game</button>
     </div>
   );
 };

@@ -10,6 +10,8 @@ interface ChessBoardProps {
   onPieceClick: (position: Position) => void;
   onSquareClick: (position: Position) => void;
   theme: BoardTheme;
+  isCheck: boolean;
+  gameState: any;
 }
 
 const ChessBoard: React.FC<ChessBoardProps> = ({
@@ -19,6 +21,8 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
   onPieceClick,
   onSquareClick,
   theme,
+  isCheck,
+  gameState,
 }) => {
   const getSquareColor = (row: number, col: number): string => {
     const isLight = (row + col) % 2 === 0;
@@ -44,16 +48,23 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
     return selectedPiece?.row === row && selectedPiece?.col === col;
   };
 
+  const isKingInCheck = (row: number, col: number): boolean => {
+    if (!isCheck) return false;
+    const piece = board[row][col];
+    return piece?.type === 'king' && piece.color === gameState.currentTurn;
+  };
+
   const renderSquare = (row: number, col: number) => {
     const piece = board[row][col];
     const squareColor = getSquareColor(row, col);
     const isValidMove = isSquareValidMove(row, col);
     const isSelected = isSquareSelected(row, col);
+    const isKingChecked = isKingInCheck(row, col);
 
     return (
       <div
         key={`${row}-${col}`}
-        className={`square ${isSelected ? 'selected' : ''} ${isValidMove ? 'valid-move' : ''}`}
+        className={`square ${isSelected ? 'selected' : ''} ${isValidMove ? 'valid-move' : ''} ${isKingChecked ? 'king-in-check' : ''}`}
         style={{ backgroundColor: squareColor }}
         onClick={() => onSquareClick({ row, col })}
       >

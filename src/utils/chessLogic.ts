@@ -28,9 +28,24 @@ const isSquareUnderAttack = (position: Position, gameState: GameState, defending
     for (let col = 0; col < 8; col++) {
       const piece = gameState.board[row][col];
       if (piece && piece.color !== defendingColor) {
-        const moves = calculateValidMoves({ row, col }, gameState);
-        if (moves.some(move => move.row === position.row && move.col === position.col)) {
-          return true;
+        // Skip king moves to avoid circular dependency
+        if (piece.type === 'king') {
+          // Check adjacent squares for king attacks
+          for (let rowOffset = -1; rowOffset <= 1; rowOffset++) {
+            for (let colOffset = -1; colOffset <= 1; colOffset++) {
+              if (rowOffset === 0 && colOffset === 0) continue;
+              const newRow = row + rowOffset;
+              const newCol = col + colOffset;
+              if (newRow === position.row && newCol === position.col) {
+                return true;
+              }
+            }
+          }
+        } else {
+          const moves = calculateValidMoves({ row, col }, gameState);
+          if (moves.some(move => move.row === position.row && move.col === position.col)) {
+            return true;
+          }
         }
       }
     }
@@ -38,7 +53,7 @@ const isSquareUnderAttack = (position: Position, gameState: GameState, defending
   return false;
 };
 
-const isKingInCheck = (gameState: GameState): boolean => {
+export const isKingInCheck = (gameState: GameState): boolean => {
   let kingPosition: Position | null = null;
   for (let row = 0; row < 8; row++) {
     for (let col = 0; col < 8; col++) {
@@ -55,7 +70,7 @@ const isKingInCheck = (gameState: GameState): boolean => {
   return isSquareUnderAttack(kingPosition, gameState, gameState.currentTurn);
 };
 
-const isCheckmate = (gameState: GameState): boolean => {
+export const isCheckmate = (gameState: GameState): boolean => {
   if (!isKingInCheck(gameState)) return false;
 
   // Try all possible moves for all pieces
@@ -65,8 +80,23 @@ const isCheckmate = (gameState: GameState): boolean => {
       if (piece && piece.color === gameState.currentTurn) {
         const moves = calculateValidMoves({ row, col }, gameState);
         for (const move of moves) {
-          const newGameState = makeMove(gameState, { row, col }, move);
-          if (!isKingInCheck(newGameState)) {
+          // Create a temporary board state to check if the move gets out of check
+          const tempBoard = gameState.board.map(row => [...row]);
+          tempBoard[move.row][move.col] = tempBoard[row][col];
+          tempBoard[row][col] = null;
+          
+          const tempGameState: GameState = {
+            ...gameState,
+            board: tempBoard,
+            currentTurn: gameState.currentTurn === 'white' ? 'black' : 'white' as PieceColor,
+            selectedPiece: null,
+            validMoves: [],
+            isCheck: false,
+            isCheckmate: false,
+            isStalemate: false
+          };
+          
+          if (!isKingInCheck(tempGameState)) {
             return false;
           }
         }
@@ -76,7 +106,7 @@ const isCheckmate = (gameState: GameState): boolean => {
   return true;
 };
 
-const isStalemate = (gameState: GameState): boolean => {
+export const isStalemate = (gameState: GameState): boolean => {
   if (isKingInCheck(gameState)) return false;
 
   // Check if any legal moves exist
@@ -85,8 +115,26 @@ const isStalemate = (gameState: GameState): boolean => {
       const piece = gameState.board[row][col];
       if (piece && piece.color === gameState.currentTurn) {
         const moves = calculateValidMoves({ row, col }, gameState);
-        if (moves.length > 0) {
-          return false;
+        for (const move of moves) {
+          // Create a temporary board state to check if the move is legal
+          const tempBoard = gameState.board.map(row => [...row]);
+          tempBoard[move.row][move.col] = tempBoard[row][col];
+          tempBoard[row][col] = null;
+          
+          const tempGameState: GameState = {
+            ...gameState,
+            board: tempBoard,
+            currentTurn: gameState.currentTurn === 'white' ? 'black' : 'white' as PieceColor,
+            selectedPiece: null,
+            validMoves: [],
+            isCheck: false,
+            isCheckmate: false,
+            isStalemate: false
+          };
+          
+          if (!isKingInCheck(tempGameState)) {
+            return false;
+          }
         }
       }
     }
@@ -271,22 +319,29 @@ const canCastle = (position: Position, gameState: GameState, isKingside: boolean
   const rookCol = isKingside ? 7 : 0;
   const rook = gameState.board[row][rookCol];
 
-  if (!rook || rook.type !== 'rook' || rook.hasMoved || rook.color !== piece.color) {
+  // Rule 1: King and rook must not have moved
+  if (!rook || rook.type !== 'rook' || rook.hasMoved || rook.color !== piece.color || piece.hasMoved) {
+    return false;
+  }
+
+  // Rule 2: King cannot be in check
+  if (isKingInCheck(gameState)) {
     return false;
   }
 
   const direction = isKingside ? 1 : -1;
   const endCol = isKingside ? 6 : 2;
 
-  // Check if path is clear
-  for (let c = col + direction; c !== endCol; c += direction) {
+  // Rule 3: No pieces between king and rook
+  for (let c = col + direction; c !== rookCol; c += direction) {
     if (gameState.board[row][c]) {
       return false;
     }
   }
 
-  // Check if king would move through check
-  for (let c = col; c !== endCol; c += direction) {
+  // Rule 4: King cannot move through check
+  // Check the squares the king will move through and the destination square
+  for (let c = col; c !== endCol + direction; c += direction) {
     if (isSquareUnderAttack({ row, col: c }, gameState, piece.color)) {
       return false;
     }
@@ -351,64 +406,4 @@ export const evaluatePosition = (gameState: GameState): number => {
     }
   }
   return score;
-};
-
-export const calculateComputerMove = (gameState: GameState): { from: Position; to: Position } | null => {
-  const validMoves: { from: Position; to: Position; score: number }[] = [];
-
-  // Collect all valid moves for the computer's pieces
-  for (let row = 0; row < 8; row++) {
-    for (let col = 0; col < 8; col++) {
-      const piece = gameState.board[row][col];
-      if (piece && piece.color === gameState.currentTurn) {
-        const moves = calculateValidMoves({ row, col }, gameState);
-        for (const move of moves) {
-          // Calculate a simple score for each move
-          let score = 0;
-          const targetPiece = gameState.board[move.row][move.col];
-          
-          // Add points for capturing pieces
-          if (targetPiece) {
-            score += PIECE_VALUES[targetPiece.type] * 10;
-          }
-          
-          // Add points for moving to center squares
-          const centerDistance = Math.abs(3.5 - move.row) + Math.abs(3.5 - move.col);
-          score += (7 - centerDistance) * 0.1;
-          
-          // Add points for moving pawns forward
-          if (piece.type === 'pawn') {
-            score += piece.color === 'white' ? (7 - move.row) * 0.5 : move.row * 0.5;
-          }
-          
-          // Add points for developing pieces (moving knights and bishops from back rank)
-          if ((piece.type === 'knight' || piece.type === 'bishop') && !piece.hasMoved) {
-            score += 0.5;
-          }
-          
-          // Add points for castling
-          if (piece.type === 'king' && Math.abs(move.col - col) === 2) {
-            score += 1;
-          }
-          
-          // Add points for checking the opponent
-          const newState = makeMove(gameState, { row, col }, move);
-          if (isKingInCheck(newState)) {
-            score += 1;
-          }
-          
-          validMoves.push({ from: { row, col }, to: move, score });
-        }
-      }
-    }
-  }
-
-  if (validMoves.length === 0) return null;
-
-  // Sort moves by score and randomly choose from the top 3 moves
-  validMoves.sort((a, b) => b.score - a.score);
-  const topMoves = validMoves.slice(0, Math.min(3, validMoves.length));
-  const randomMove = topMoves[Math.floor(Math.random() * topMoves.length)];
-
-  return { from: randomMove.from, to: randomMove.to };
 }; 
