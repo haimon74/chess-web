@@ -1,4 +1,4 @@
-.chess-game {
+.chessGame {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -8,12 +8,12 @@
   margin: 0 auto;
 }
 
-.game-info {
+.gameInfo {
   width: 100%;
   text-align: center;
 }
 
-.turn-info {
+.turnInfo {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -21,7 +21,7 @@
   margin: 20px 0;
 }
 
-.turn-info button {
+.button {
   padding: 8px 16px;
   font-size: 14px;
   border: none;
@@ -33,33 +33,34 @@
   min-width: 40px;
 }
 
-.turn-info button:hover {
+.button:hover {
   background-color: #357abd;
 }
 
-.turn-info button:disabled {
+.button:disabled {
   background-color: #cccccc;
   cursor: not-allowed;
 }
 
-.revert-button {
+.revertButton {
   background-color: #e74c3c !important;
   font-size: 20px;
   font-weight: bold;
-  line-height: 1;
+  line-height: 1em;
+  padding: 4px 12px;
 }
 
-.revert-button:hover {
+.revertButton:hover {
   background-color: #c0392b !important;
 }
 
-.board-container {
+.boardContainer {
   width: 100%;
   max-width: 600px;
   aspect-ratio: 1;
 }
 
-.turn-label {
+.turnLabel {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -86,14 +87,21 @@
   100% { transform: rotate(360deg); }
 }
 
-.checkmate, .stalemate {
+.checkmate {
   font-size: 24px;
   font-weight: bold;
   margin: 10px 0;
   color: #e74c3c;
 }
 
-.modal-overlay {
+.stalemate {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 10px 0;
+  color: #666;
+}
+
+.modalOverlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -106,7 +114,7 @@
   z-index: 1000;
 }
 
-.modal-content {
+.modalContent {
   background-color: white;
   padding: 20px;
   border-radius: 8px;

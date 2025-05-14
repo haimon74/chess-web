@@ -1,7 +1,7 @@
 import React from 'react';
 import { Piece, Position, BoardTheme } from '../types/chess';
 import { UNICODE_PIECES } from '../types/chess';
-import './ChessBoard.css';
+import styles from './ChessBoard.module.css';
 
 interface ChessBoardProps {
   board: (Piece | null)[][];
@@ -69,13 +69,13 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
     return (
       <div
         key={`${row}-${col}`}
-        className={`square ${isSelected ? 'selected' : ''} ${isValidMove ? 'valid-move' : ''} ${isKingChecked ? 'king-in-check' : ''}`}
+        className={`${styles.square} ${isSelected ? styles.selected : ''} ${isValidMove ? styles.validMove : ''} ${isKingChecked ? styles.kingInCheck : ''}`}
         style={{ backgroundColor: squareColor }}
         onClick={() => onSquareClick({ row, col })}
       >
         {piece && (
           <div
-            className={`piece ${piece.color === 'white' ? 'white-piece' : ''}`}
+            className={`${styles.piece} ${piece.color === 'white' ? styles.whitePiece : ''}`}
             onClick={(e) => {
               e.stopPropagation();
               onPieceClick({ row, col });
@@ -84,11 +84,11 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
             <img 
               src={getPieceImage(piece)} 
               alt={UNICODE_PIECES[piece.color][piece.type]} 
-              className="piece-image"
+              className={styles.pieceImage}
             />
           </div>
         )}
-        {isValidMove && <div className="valid-move-indicator" />}
+        {isValidMove && <div className={styles.validMoveIndicator} />}
       </div>
     );
   };
@@ -99,16 +99,16 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
 
     return (
       <>
-        <div className="board-labels files">
+        <div className={`${styles.boardLabels} ${styles.files}`}>
           {files.map((file, index) => (
-            <div key={file} className="label file">
+            <div key={file} className={styles.label}>
               {file}
             </div>
           ))}
         </div>
-        <div className="board-labels ranks">
+        <div className={`${styles.boardLabels} ${styles.ranks}`}>
           {ranks.map((rank, index) => (
-            <div key={rank} className="label rank">
+            <div key={rank} className={`${styles.label} ${styles.rank}`}>
               {rank}
             </div>
           ))}
@@ -118,11 +118,11 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
   };
 
   return (
-    <div className="chess-board-container">
+    <div className={styles.chessBoardContainer}>
       {renderBoardLabels()}
-      <div className="chess-board">
+      <div className={styles.chessBoard}>
         {board.map((row, rowIndex) => (
-          <div key={rowIndex} className="board-row">
+          <div key={rowIndex} className={styles.boardRow}>
             {row.map((_, colIndex) => renderSquare(rowIndex, colIndex))}
           </div>
         ))}

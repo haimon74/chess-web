@@ -1,4 +1,4 @@
-.chess-board-container {
+.chessBoardContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -6,7 +6,7 @@
   position: relative;
 }
 
-.chess-board {
+.chessBoard {
   display: grid;
   grid-template-rows: repeat(8, 1fr);
   width: 560px;
@@ -15,7 +15,7 @@
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
 }
 
-.board-row {
+.boardRow {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
 }
@@ -35,11 +35,11 @@
   filter: brightness(1.1);
 }
 
-.square.selected {
+.selected {
   background-color: rgba(255, 255, 0, 0.3) !important;
 }
 
-.square.valid-move::after {
+.validMove::after {
   content: '';
   position: absolute;
   width: 25px;
@@ -49,13 +49,22 @@
   z-index: 1;
 }
 
-.square.valid-move:hover::after {
+.validMove:hover::after {
   background-color: rgba(0, 255, 0, 0.6);
   transform: scale(1.1);
   transition: all 0.2s ease;
 }
 
-.square.king-in-check {
+.validMoveIndicator {
+  position: absolute;
+  width: 25px;
+  height: 25px;
+  background-color: rgba(0, 255, 0, 0.4);
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.kingInCheck {
   background-color: rgba(255, 0, 0, 0.3) !important;
   animation: pulse 1.5s infinite;
 }
@@ -77,14 +86,14 @@
   transition: transform 0.2s;
 }
 
-.piece-image {
+.pieceImage {
   width: 80%;
   height: 80%;
   object-fit: contain;
   pointer-events: none;
 }
 
-.piece.white-piece {
+.whitePiece {
   /* font-weight: bold; */
 }
 
@@ -92,7 +101,7 @@
   transform: scale(1.1);
 }
 
-.board-labels {
+.boardLabels {
   display: flex;
   position: absolute;
   font-size: 16px;
@@ -100,14 +109,14 @@
   color: #333;
 }
 
-.board-labels.files {
+.files {
   bottom: -25px;
   left: 0;
   width: 100%;
   justify-content: space-around;
 }
 
-.board-labels.ranks {
+.ranks {
   right: -25px;
   top: 0;
   height: 100%;
@@ -120,13 +129,13 @@
   text-align: center;
 }
 
-.label.rank {
+.rank {
   width: 20px;
   text-align: center;
   margin-left: 4px;
 }
 
-.check-warning {
+.checkWarning {
   color: #ff0000;
   font-weight: bold;
   font-size: 1.2em;

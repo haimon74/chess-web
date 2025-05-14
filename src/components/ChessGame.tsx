@@ -4,7 +4,7 @@ import ChessBoard from './ChessBoard';
 import GameSettings from './GameSettings';
 import { initializeBoard, makeMove, calculateValidMoves } from '../utils/chessLogic';
 import { calculateComputerMove } from '../utils/chessAI';
-import './ChessGame.css';
+import styles from './ChessGame.module.css';
 
 const ChessGame: React.FC = () => {
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -102,28 +102,27 @@ const ChessGame: React.FC = () => {
   }
 
   return (
-    <div className="chess-game">
-      <div className="game-info">
-        <div className="turn-info">
-          <button onClick={() => setShowSettings(true)}>New Game</button>
+    <div className={styles.chessGame}>
+      <div className={styles.gameInfo}>
+        <div className={styles.turnInfo}>
+          <button className={styles.button} onClick={() => setShowSettings(true)}>New Game</button>
           <button 
-            style={{ fontSize: '20px', lineHeight: '0.7em' }}
             onClick={handleRevert}
             disabled={gameState.currentTurn !== settings.playerColor || moveHistory.length < 3}
-            className="revert-button"
+            className={`${styles.button} ${styles.revertButton}`}
             title="Undo Move"
           >
             <b>&#8630;</b>
           </button>
-          <p className="turn-label">
+          <p className={styles.turnLabel}>
             Current Turn: {gameState.currentTurn}
-            <div className={`spinner ${isComputerThinking ? 'visible' : ''}`}></div>
+            <div className={`${styles.spinner} ${isComputerThinking ? styles.visible : ''}`}></div>
           </p>
         </div>
-        {gameState.isCheckmate && <p className="checkmate">Checkmate!</p>}
-        {gameState.isStalemate && <p className="stalemate">Stalemate!</p>}
+        {gameState.isCheckmate && <p className={styles.checkmate}>Checkmate!</p>}
+        {gameState.isStalemate && <p className={styles.stalemate}>Stalemate!</p>}
       </div>
-      <div className="board-container">
+      <div className={styles.boardContainer}>
         <ChessBoard
           board={gameState.board}
           selectedPiece={gameState.selectedPiece}
@@ -136,8 +135,8 @@ const ChessGame: React.FC = () => {
         />
       </div>
       {showSettings && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
             <GameSettings onStart={startNewGame} />
           </div>
         </div>
