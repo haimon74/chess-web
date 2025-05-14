@@ -108,7 +108,7 @@
 }
 
 .board-labels.ranks {
-  right: -15px;
+  right: -25px;
   top: 0;
   height: 100%;
   flex-direction: column;
@@ -118,6 +118,12 @@
 .label {
   width: 20px;
   text-align: center;
+}
+
+.label.rank {
+  width: 20px;
+  text-align: center;
+  margin-left: 4px;
 }
 
 .check-warning {
