@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GameState, GameSettings as GameSettingsType, Position } from '../types/chess';
+import { GameState, GameSettings as GameSettingsType, Position, PieceColor } from '../types/chess';
 import ChessBoard from './ChessBoard';
 import GameSettings from './GameSettings';
 import { initializeBoard, makeMove, calculateValidMoves } from '../utils/chessLogic';
@@ -9,18 +9,21 @@ import './ChessGame.css';
 const ChessGame: React.FC = () => {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [isComputerThinking, setIsComputerThinking] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [moveHistory, setMoveHistory] = useState<GameState[]>([]);
   const [settings, setSettings] = useState<GameSettingsType>({
     playerColor: 'white',
     computerLevel: 2,
-    boardTheme: 'classic',
+    boardTheme: 'green',
   });
 
   const startNewGame = (newSettings: GameSettingsType) => {
     setSettings(newSettings);
+    setShowSettings(false);
     const initialBoard = initializeBoard();
-    setGameState({
+    const initialState: GameState = {
       board: initialBoard,
-      currentTurn: 'white',
+      currentTurn: 'white' as PieceColor,
       selectedPiece: null,
       validMoves: [],
       isCheck: false,
@@ -29,7 +32,21 @@ const ChessGame: React.FC = () => {
       computerLevel: newSettings.computerLevel,
       playerColor: newSettings.playerColor,
       boardTheme: newSettings.boardTheme,
-    });
+    };
+    setGameState(initialState);
+    setMoveHistory([initialState]);
+  };
+
+  const handleRevert = () => {
+    if (!gameState || gameState.currentTurn !== settings.playerColor) return;
+    
+    // Need to go back at least 2 moves (player's move and computer's move)
+    if (moveHistory.length < 3) return;
+    
+    // Remove the last two states (computer's move and player's move)
+    const newHistory = moveHistory.slice(0, -2);
+    setMoveHistory(newHistory);
+    setGameState(newHistory[newHistory.length - 1]);
   };
 
   const handlePieceClick = (position: Position) => {
@@ -56,6 +73,7 @@ const ChessGame: React.FC = () => {
     if (isValid) {
       const newGameState = makeMove(gameState, gameState.selectedPiece, position);
       setGameState(newGameState);
+      setMoveHistory(prev => [...prev, newGameState]);
 
       // Computer's turn
       if (newGameState.currentTurn !== settings.playerColor && !newGameState.isCheckmate) {
@@ -65,6 +83,13 @@ const ChessGame: React.FC = () => {
           if (computerMove) {
             const updatedGameState = makeMove(newGameState, computerMove.from, computerMove.to);
             setGameState(updatedGameState);
+            setMoveHistory(prev => [...prev, updatedGameState]);
+          } else if (newGameState.isCheck) {
+            // If computer can't move and is in check, it's checkmate
+            setGameState({
+              ...newGameState,
+              isCheckmate: true
+            });
           }
           setIsComputerThinking(false);
         }, 500);
@@ -79,14 +104,21 @@ const ChessGame: React.FC = () => {
   return (
     <div className="chess-game">
       <div className="game-info">
-        <h2>Chess Game</h2>
         <div className="turn-info">
-          <button onClick={() => startNewGame(settings)}>New Game</button>
-          <p>Current Turn: {gameState.currentTurn}</p>
-          <div className={`computer-thinking ${isComputerThinking ? 'visible' : ''}`}>
-            <div className="spinner"></div>
-            <span>Computer is thinking...</span>
-          </div>
+          <button onClick={() => setShowSettings(true)}>New Game</button>
+          <button 
+            style={{ fontSize: '20px', lineHeight: '0.7em' }}
+            onClick={handleRevert}
+            disabled={gameState.currentTurn !== settings.playerColor || moveHistory.length < 3}
+            className="revert-button"
+            title="Undo Move"
+          >
+            <b>&#8630;</b>
+          </button>
+          <p className="turn-label">
+            Current Turn: {gameState.currentTurn}
+            <div className={`spinner ${isComputerThinking ? 'visible' : ''}`}></div>
+          </p>
         </div>
         {gameState.isCheckmate && <p className="checkmate">Checkmate!</p>}
         {gameState.isStalemate && <p className="stalemate">Stalemate!</p>}
@@ -103,6 +135,13 @@ const ChessGame: React.FC = () => {
           gameState={gameState}
         />
       </div>
+      {showSettings && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <GameSettings onStart={startNewGame} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

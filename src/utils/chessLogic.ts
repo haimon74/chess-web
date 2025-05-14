@@ -42,9 +42,121 @@ const isSquareUnderAttack = (position: Position, gameState: GameState, defending
             }
           }
         } else {
-          const moves = calculateValidMoves({ row, col }, gameState);
-          if (moves.some(move => move.row === position.row && move.col === position.col)) {
-            return true;
+          // Direct attack checks for each piece type
+          switch (piece.type) {
+            case 'pawn':
+              const direction = piece.color === 'white' ? -1 : 1;
+              if (row + direction === position.row && 
+                  (col - 1 === position.col || col + 1 === position.col)) {
+                return true;
+              }
+              break;
+            case 'knight':
+              const knightMoves = [
+                { row: row - 2, col: col - 1 }, { row: row - 2, col: col + 1 },
+                { row: row - 1, col: col - 2 }, { row: row - 1, col: col + 2 },
+                { row: row + 1, col: col - 2 }, { row: row + 1, col: col + 2 },
+                { row: row + 2, col: col - 1 }, { row: row + 2, col: col + 1 }
+              ];
+              if (knightMoves.some(move => 
+                move.row === position.row && move.col === position.col)) {
+                return true;
+              }
+              break;
+            case 'bishop':
+              // Check if the target square is on the same diagonal
+              if (Math.abs(row - position.row) === Math.abs(col - position.col)) {
+                // For adjacent squares, no need to check for pieces in between
+                if (Math.abs(row - position.row) === 1) {
+                  return true;
+                }
+                
+                // For non-adjacent squares, check if there are any pieces in between
+                const rowDir = position.row > row ? 1 : -1;
+                const colDir = position.col > col ? 1 : -1;
+                let currentRow = row + rowDir;
+                let currentCol = col + colDir;
+                
+                while (currentRow !== position.row && currentCol !== position.col) {
+                  if (gameState.board[currentRow][currentCol]) {
+                    return false;
+                  }
+                  currentRow += rowDir;
+                  currentCol += colDir;
+                }
+                return true;
+              }
+              break;
+            case 'queen':
+              // Check diagonal moves (like bishop)
+              if (Math.abs(row - position.row) === Math.abs(col - position.col)) {
+                // For adjacent squares, no need to check for pieces in between
+                if (Math.abs(row - position.row) === 1) {
+                  return true;
+                }
+                
+                const rowDir = position.row > row ? 1 : -1;
+                const colDir = position.col > col ? 1 : -1;
+                let currentRow = row + rowDir;
+                let currentCol = col + colDir;
+                
+                while (currentRow !== position.row && currentCol !== position.col) {
+                  if (gameState.board[currentRow][currentCol]) {
+                    return false;
+                  }
+                  currentRow += rowDir;
+                  currentCol += colDir;
+                }
+                return true;
+              }
+              // Check straight moves (like rook)
+              if (row === position.row || col === position.col) {
+                // For adjacent squares, no need to check for pieces in between
+                if (Math.abs(row - position.row) === 1 || Math.abs(col - position.col) === 1) {
+                  return true;
+                }
+                
+                const rowDir = position.row > row ? 1 : position.row < row ? -1 : 0;
+                const colDir = position.col > col ? 1 : position.col < col ? -1 : 0;
+                let currentRow = row + rowDir;
+                let currentCol = col + colDir;
+                
+                // Check all squares between the rook and the target square
+                while (currentRow !== position.row || currentCol !== position.col) {
+                  if (gameState.board[currentRow][currentCol]) {
+                    return false;
+                  }
+                  currentRow += rowDir;
+                  currentCol += colDir;
+                }
+                return true;
+              }
+              break;
+            case 'rook':
+              // Check if the target square is on the same row or column
+              if (row === position.row || col === position.col) {
+                // For adjacent squares, no need to check for pieces in between
+                if (Math.abs(row - position.row) === 1 || Math.abs(col - position.col) === 1) {
+                  return true;
+                }
+                
+                // Determine the direction of movement
+                const rowDir = position.row > row ? 1 : position.row < row ? -1 : 0;
+                const colDir = position.col > col ? 1 : position.col < col ? -1 : 0;
+                let currentRow = row + rowDir;
+                let currentCol = col + colDir;
+                
+                // Check all squares between the rook and the target square
+                while (currentRow !== position.row || currentCol !== position.col) {
+                  if (gameState.board[currentRow][currentCol]) {
+                    return false;
+                  }
+                  currentRow += rowDir;
+                  currentCol += colDir;
+                }
+                return true;
+              }
+              break;
           }
         }
       }
@@ -54,6 +166,7 @@ const isSquareUnderAttack = (position: Position, gameState: GameState, defending
 };
 
 export const isKingInCheck = (gameState: GameState): boolean => {
+  // Find the king's position
   let kingPosition: Position | null = null;
   for (let row = 0; row < 8; row++) {
     for (let col = 0; col < 8; col++) {
@@ -66,7 +179,12 @@ export const isKingInCheck = (gameState: GameState): boolean => {
     if (kingPosition) break;
   }
 
-  if (!kingPosition) return false;
+  if (!kingPosition) {
+    console.error('King not found for current player');
+    return false;
+  }
+
+  // Check if the king's square is under attack by any opponent's piece
   return isSquareUnderAttack(kingPosition, gameState, gameState.currentTurn);
 };
 
@@ -170,6 +288,28 @@ export const calculateValidMoves = (position: Position, gameState: GameState): P
       break;
   }
 
+  // If in check, filter moves to only those that get out of check
+  if (gameState.isCheck) {
+    return moves.filter(move => {
+      const tempBoard = gameState.board.map(row => [...row]);
+      tempBoard[move.row][move.col] = tempBoard[position.row][position.col];
+      tempBoard[position.row][position.col] = null;
+      
+      const tempGameState: GameState = {
+        ...gameState,
+        board: tempBoard,
+        currentTurn: gameState.currentTurn,
+        selectedPiece: null,
+        validMoves: [],
+        isCheck: false,
+        isCheckmate: false,
+        isStalemate: false
+      };
+      
+      return !isKingInCheck(tempGameState);
+    });
+  }
+
   return moves;
 };
 
@@ -213,7 +353,26 @@ const calculateKnightMoves = (position: Position, gameState: GameState, moves: P
     if (isValidPosition(move.row, move.col)) {
       const targetPiece = gameState.board[move.row][move.col];
       if (!targetPiece || targetPiece.color !== piece.color) {
-        moves.push(move);
+        // Create a temporary board state to check if the move would put or leave our king in check
+        const tempBoard = gameState.board.map(row => [...row]);
+        tempBoard[move.row][move.col] = tempBoard[position.row][position.col];
+        tempBoard[position.row][position.col] = null;
+        
+        const tempGameState: GameState = {
+          ...gameState,
+          board: tempBoard,
+          currentTurn: gameState.currentTurn,
+          selectedPiece: null,
+          validMoves: [],
+          isCheck: false,
+          isCheckmate: false,
+          isStalemate: false
+        };
+        
+        // Only prevent moves that would put or leave our own king in check
+        if (!isKingInCheck(tempGameState)) {
+          moves.push(move);
+        }
       }
     }
   }
@@ -294,7 +453,29 @@ const calculateKingMoves = (position: Position, gameState: GameState, moves: Pos
       if (isValidPosition(newRow, newCol)) {
         const targetPiece = gameState.board[newRow][newCol];
         if (!targetPiece || targetPiece.color !== piece.color) {
-          moves.push({ row: newRow, col: newCol });
+          // Create a temporary board state to check if the move is safe
+          const tempBoard = gameState.board.map(row => [...row]);
+          tempBoard[newRow][newCol] = tempBoard[position.row][position.col];
+          tempBoard[position.row][position.col] = null;
+          
+          const tempGameState: GameState = {
+            ...gameState,
+            board: tempBoard,
+            currentTurn: gameState.currentTurn,
+            selectedPiece: null,
+            validMoves: [],
+            isCheck: false,
+            isCheckmate: false,
+            isStalemate: false
+          };
+          
+          // Check if the destination square is under attack by opponent's pieces
+          const isSquareAttacked = isSquareUnderAttack({ row: newRow, col: newCol }, tempGameState, piece.color);
+          
+          // Only allow the move if the square is not under attack
+          if (!isSquareAttacked) {
+            moves.push({ row: newRow, col: newCol });
+          }
         }
       }
     }

@@ -54,6 +54,11 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
     return piece?.type === 'king' && piece.color === gameState.currentTurn;
   };
 
+  const getPieceImage = (piece: Piece) => {
+    const colorPrefix = piece.color === 'white' ? 'light' : 'dark';
+    return `/assets/images/${colorPrefix}_${piece.type}.svg`;
+  };
+
   const renderSquare = (row: number, col: number) => {
     const piece = board[row][col];
     const squareColor = getSquareColor(row, col);
@@ -70,13 +75,17 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
       >
         {piece && (
           <div
-            className="piece"
+            className={`piece ${piece.color === 'white' ? 'white-piece' : ''}`}
             onClick={(e) => {
               e.stopPropagation();
               onPieceClick({ row, col });
             }}
           >
-            {UNICODE_PIECES[piece.color][piece.type]}
+            <img 
+              src={getPieceImage(piece)} 
+              alt={UNICODE_PIECES[piece.color][piece.type]} 
+              className="piece-image"
+            />
           </div>
         )}
         {isValidMove && <div className="valid-move-indicator" />}

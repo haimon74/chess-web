@@ -1,4 +1,4 @@
-.game-settings {
+.gameSettings {
   max-width: 400px;
   margin: 40px auto;
   padding: 20px;
@@ -7,25 +7,25 @@
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-.game-settings h2 {
+.title {
   text-align: center;
   color: #333;
   margin-bottom: 20px;
 }
 
-.setting-group {
+.settingGroup {
   margin-bottom: 20px;
 }
 
-.setting-group label {
+.settingGroup label {
   display: block;
   margin-bottom: 8px;
   color: #555;
   font-weight: 500;
 }
 
-.setting-group select,
-.setting-group input[type="range"] {
+.settingGroup select,
+.settingGroup input[type="range"] {
   width: 100%;
   padding: 8px;
   border: 1px solid #ddd;
@@ -33,18 +33,18 @@
   font-size: 16px;
 }
 
-.setting-group input[type="range"] {
+.settingGroup input[type="range"] {
   margin: 10px 0;
 }
 
-.setting-group span {
+.settingGroup span {
   display: inline-block;
   margin-left: 10px;
   font-weight: bold;
   color: #333;
 }
 
-.start-button {
+.startButton {
   display: block;
   width: 100%;
   padding: 12px;
@@ -58,10 +58,10 @@
   transition: background-color 0.2s;
 }
 
-.start-button:hover {
+.startButton:hover {
   background-color: #45a049;
 }
 
-.start-button:active {
+.startButton:active {
   background-color: #3d8b40;
 } 

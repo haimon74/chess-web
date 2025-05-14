@@ -107,8 +107,30 @@ const minimax = (
 
 export const calculateComputerMove = (gameState: GameState): Move | null => {
   const depth = getDepthFromLevel(gameState.computerLevel);
-  const moves = getAllLegalMoves(gameState, gameState.currentTurn);
+  let moves = getAllLegalMoves(gameState, gameState.currentTurn);
   
+  if (moves.length === 0) return null;
+
+  // If in check, filter moves to only those that get out of check
+  if (gameState.isCheck) {
+    moves = moves.filter(move => {
+      const newState = makeMove(gameState, move.from, move.to);
+      return !isKingInCheck(newState);
+    });
+    
+    // If no moves get out of check, it's checkmate
+    if (moves.length === 0) {
+      gameState.isCheckmate = true;
+      return null;
+    }
+  }
+
+  // If not in check, filter out moves that would put or leave the king in check
+  moves = moves.filter(move => {
+    const newState = makeMove(gameState, move.from, move.to);
+    return !isKingInCheck(newState);
+  });
+
   if (moves.length === 0) return null;
 
   let bestMove: Move | null = null;

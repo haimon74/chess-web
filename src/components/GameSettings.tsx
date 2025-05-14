@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { GameSettings as GameSettingsType, PieceColor, BoardTheme } from '../types/chess';
-import './GameSettings.css';
+import styles from './GameSettings.module.css';
 
 interface GameSettingsProps {
   onStart: (settings: GameSettingsType) => void;
@@ -9,7 +9,7 @@ interface GameSettingsProps {
 const GameSettings: React.FC<GameSettingsProps> = ({ onStart }) => {
   const [playerColor, setPlayerColor] = useState<PieceColor>('white');
   const [computerLevel, setComputerLevel] = useState<number>(2);
-  const [boardTheme, setBoardTheme] = useState<BoardTheme>('classic');
+  const [boardTheme, setBoardTheme] = useState<BoardTheme>('green');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,10 +21,10 @@ const GameSettings: React.FC<GameSettingsProps> = ({ onStart }) => {
   };
 
   return (
-    <div className="game-settings">
-      <h2>Chess Game Settings</h2>
+    <div className={styles.gameSettings}>
+      <h2 className={styles.title}>Game Settings</h2>
       <form onSubmit={handleSubmit}>
-        <div className="setting-group">
+        <div className={styles.settingGroup}>
           <label>
             Choose Your Color:
             <select
@@ -37,13 +37,13 @@ const GameSettings: React.FC<GameSettingsProps> = ({ onStart }) => {
           </label>
         </div>
 
-        <div className="setting-group">
+        <div className={styles.settingGroup}>
           <label>
-            Computer Level (1-5):
+            Computer Level (1-3):
             <input
               type="range"
               min="1"
-              max="5"
+              max="3"
               value={computerLevel}
               onChange={(e) => setComputerLevel(parseInt(e.target.value))}
             />
@@ -51,22 +51,22 @@ const GameSettings: React.FC<GameSettingsProps> = ({ onStart }) => {
           </label>
         </div>
 
-        <div className="setting-group">
+        <div className={styles.settingGroup}>
           <label>
             Board Theme:
             <select
               value={boardTheme}
               onChange={(e) => setBoardTheme(e.target.value as BoardTheme)}
             >
+              <option value="green">Nature</option>
               <option value="classic">Classic</option>
               <option value="brown">Wood</option>
-              <option value="green">Nature</option>
               <option value="navy">Ocean</option>
             </select>
           </label>
         </div>
 
-        <button type="submit" className="start-button">
+        <button type="submit" className={styles.startButton}>
           Start Game
         </button>
       </form>
